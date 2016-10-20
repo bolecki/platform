@@ -4,6 +4,8 @@
 import React from 'react';
 
 import * as AsyncClient from 'utils/async_client.jsx';
+import IntegrationStore from 'stores/integration_store.jsx';
+import TeamStore from 'stores/team_store.jsx';
 import * as Utils from 'utils/utils.jsx';
 
 import BackstageHeader from 'components/backstage/components/backstage_header.jsx';
@@ -19,12 +21,15 @@ const REQUEST_GET = 'G';
 export default class AddCommand extends React.Component {
     static get propTypes() {
         return {
-            team: React.propTypes.object.isRequired
+            team: React.propTypes.object.isRequired,
+            location: React.PropTypes.object
         };
     }
 
     constructor(props) {
         super(props);
+
+        this.handleIntegrationChange = this.handleIntegrationChange.bind(this);
 
         this.handleSubmit = this.handleSubmit.bind(this);
 
@@ -39,21 +44,86 @@ export default class AddCommand extends React.Component {
         this.updateAutocompleteHint = this.updateAutocompleteHint.bind(this);
         this.updateAutocompleteDescription = this.updateAutocompleteDescription.bind(this);
 
-        this.state = {
-            displayName: '',
-            description: '',
-            trigger: '',
-            url: '',
-            method: REQUEST_POST,
-            username: '',
-            iconUrl: '',
-            autocomplete: false,
-            autocompleteHint: '',
-            autocompleteDescription: '',
-            saving: false,
-            serverError: '',
-            clientError: null
-        };
+        const action = this.props.location.query.action
+
+        if (action === 'edit') {
+            const teamId = TeamStore.getCurrentId();
+
+            this.state = {
+                team: teamId,
+                action: action,
+                commands: IntegrationStore.getCommands(teamId),
+                loading: !IntegrationStore.hasReceivedCommands(teamId),
+                displayName: '',
+                description: '',
+                trigger: '',
+                url: '',
+                method: REQUEST_POST,
+                username: '',
+                iconUrl: '',
+                autocomplete: false,
+                autocompleteHint: '',
+                autocompleteDescription: '',
+                saving: false,
+                serverError: '',
+                clientError: null
+            };
+        } else {
+            this.state = {
+                action: action,
+                displayName: '',
+                description: '',
+                trigger: '',
+                url: '',
+                method: REQUEST_POST,
+                username: '',
+                iconUrl: '',
+                autocomplete: false,
+                autocompleteHint: '',
+                autocompleteDescription: '',
+                saving: false,
+                serverError: '',
+                clientError: null
+            };
+        }
+    }
+
+    componentDidMount() {
+        IntegrationStore.addChangeListener(this.handleIntegrationChange);
+
+        if (window.mm_config.EnableCommands === 'true') {
+            AsyncClient.listTeamCommands();
+        }
+    }
+
+    componentWillUnmount() {
+        IntegrationStore.removeChangeListener(this.handleIntegrationChange);
+    }
+
+    handleIntegrationChange() {
+        const teamId = TeamStore.getCurrentId();
+
+        this.setState({
+            commands: IntegrationStore.getCommands(teamId),
+            loading: !IntegrationStore.hasReceivedCommands(teamId)
+        });
+
+        if (!this.state.loading) {
+            let cmd = this.state.commands.filter((command) => command.id === this.props.location.query.id)[0];
+
+            this.setState({
+                displayName: cmd.display_name,
+                description: cmd.description,
+                trigger: cmd.trigger,
+                url: cmd.url,
+                method: cmd.method,
+                username: cmd.username,
+                iconUrl: cmd.icon_url,
+                autocomplete: cmd.auto_complete,
+                autocompleteHint: cmd.auto_complete_hint,
+                autocompleteDescription: cmd.auto_complete_desc
+            });
+        }
     }
 
     handleSubmit(e) {
@@ -238,6 +308,12 @@ export default class AddCommand extends React.Component {
     }
 
     render() {
+        let action = null;
+        if (this.state.action === 'edit') {
+            action = "Edit";
+        } else {
+            action = "Add";
+        }
         let autocompleteFields = null;
         if (this.state.autocomplete) {
             autocompleteFields = [(
@@ -318,8 +394,8 @@ export default class AddCommand extends React.Component {
                         />
                     </Link>
                     <FormattedMessage
-                        id='integrations.add'
-                        defaultMessage='Add'
+                        id={'integrations.' + action}
+                        defaultMessage={action}
                     />
                 </BackstageHeader>
                 <div className='backstage-form'>
