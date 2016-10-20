@@ -59,12 +59,6 @@ export default {
                     getComponents: (location, callback) => {
                         System.import('components/integrations/components/add_command.jsx').then(RouteUtils.importComponentSuccess(callback));
                     }
-                },
-                {
-                    path: 'edit',
-                    getComponents: (location, callback) => {
-                        System.import('components/integrations/components/add_command.jsx').then(RouteUtils.importComponentSuccess(callback));
-                    }
                 }
             ]
         },

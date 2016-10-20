@@ -132,7 +132,7 @@ export default class InstalledCommand extends React.Component {
                     </a>
                     {' - '}
                     <a
-                        href='commands/edit'
+                        href={'commands/add?action=edit&id=' + command.id}
                     >
                         <FormattedMessage
                             id='installed_integrations.edit'
