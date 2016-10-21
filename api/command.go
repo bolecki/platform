@@ -45,6 +45,7 @@ func InitCommand() {
 	BaseRoutes.Commands.Handle("/list", ApiUserRequired(listCommands)).Methods("GET")
 
 	BaseRoutes.Commands.Handle("/create", ApiUserRequired(createCommand)).Methods("POST")
+	BaseRoutes.Commands.Handle("/update", ApiUserRequired(updateCommand)).Methods("POST")
 	BaseRoutes.Commands.Handle("/list_team_commands", ApiUserRequired(listTeamCommands)).Methods("GET")
 	BaseRoutes.Commands.Handle("/regen_token", ApiUserRequired(regenCommandToken)).Methods("POST")
 	BaseRoutes.Commands.Handle("/delete", ApiUserRequired(deleteCommand)).Methods("POST")
@@ -307,6 +308,47 @@ func createCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
+
+	if result := <-Srv.Store.Command().Save(cmd); result.Err != nil {
+		c.Err = result.Err
+		return
+	} else {
+		c.LogAudit("success")
+		rcmd := result.Data.(*model.Command)
+		w.Write([]byte(rcmd.ToJson()))
+	}
+}
+
+func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
+	if !*utils.Cfg.ServiceSettings.EnableCommands {
+		c.Err = model.NewLocAppError("createCommand", "api.command.disabled.app_error", nil, "")
+		c.Err.StatusCode = http.StatusNotImplemented
+		return
+	}
+
+	if !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_SLASH_COMMANDS) {
+		c.Err = model.NewLocAppError("createCommand", "api.command.admin_only.app_error", nil, "")
+		c.Err.StatusCode = http.StatusForbidden
+		return
+	}
+
+	c.LogAudit("attempt")
+
+	cmd := model.CommandFromJson(r.Body)
+
+	if cmd == nil {
+		c.SetInvalidParam("createCommand", "command")
+		return
+	}
+
+	cmd.Trigger = strings.ToLower(cmd.Trigger)
+	cmd.CreatorId = c.Session.UserId
+	cmd.TeamId = c.TeamId
+
+	if result := <-Srv.Store.Command().GetByTeam(c.TeamId); result.Err != nil {
+		c.Err = result.Err
+		return
 	}
 
 	if result := <-Srv.Store.Command().Save(cmd); result.Err != nil {

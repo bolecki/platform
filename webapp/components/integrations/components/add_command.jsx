@@ -233,18 +233,33 @@ export default class AddCommand extends React.Component {
             return;
         }
 
-        AsyncClient.addCommand(
-            command,
-            (data) => {
-                browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
-            },
-            (err) => {
-                this.setState({
-                    saving: false,
-                    serverError: err.message
-                });
-            }
-        );
+        if (this.state.action === 'edit') {
+            AsyncClient.editCommand(
+                command,
+                (data) => {
+                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
+                },
+                (err) => {
+                    this.setState({
+                        saving: false,
+                        serverError: err.message
+                    });
+                }
+            );
+        } else {
+            AsyncClient.addCommand(
+                command,
+                (data) => {
+                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
+                },
+                (err) => {
+                    this.setState({
+                        saving: false,
+                        serverError: err.message
+                    });
+                }
+            );
+        }
     }
 
     updateDisplayName(e) {
