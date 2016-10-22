@@ -1354,6 +1354,7 @@
   "installed_integrations.content_type": "Content-Type: {contentType}",
   "installed_integrations.creation": "Created by {creator} on {createAt, date, full}",
   "installed_integrations.delete": "Delete",
+  "installed_integrations.edit": "Edit",
   "installed_integrations.hideSecret": "Hide Secret",
   "installed_integrations.regenSecret": "Regenerate Secret",
   "installed_integrations.regenToken": "Regenerate Token",
