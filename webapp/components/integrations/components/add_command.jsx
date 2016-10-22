@@ -14,6 +14,7 @@ import FormError from 'components/form_error.jsx';
 import {browserHistory, Link} from 'react-router/es6';
 import SpinnerButton from 'components/spinner_button.jsx';
 import Constants from 'utils/constants.jsx';
+import UpdateCommandModal from '../../update_command_modal.jsx';
 
 const REQUEST_POST = 'P';
 const REQUEST_GET = 'G';
@@ -32,6 +33,9 @@ export default class AddCommand extends React.Component {
         this.handleIntegrationChange = this.handleIntegrationChange.bind(this);
 
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleUpdate = this.handleUpdate.bind(this);
+        this.handleUpdateModal = this.handleUpdateModal.bind(this);
+        this.updateModalDismissed = this.updateModalDismissed.bind(this);
 
         this.updateDisplayName = this.updateDisplayName.bind(this);
         this.updateDescription = this.updateDescription.bind(this);
@@ -66,7 +70,8 @@ export default class AddCommand extends React.Component {
                 autocompleteDescription: '',
                 saving: false,
                 serverError: '',
-                clientError: null
+                clientError: null,
+                showUpdateModal: false
             };
         } else {
             this.state = {
@@ -83,7 +88,8 @@ export default class AddCommand extends React.Component {
                 autocompleteDescription: '',
                 saving: false,
                 serverError: '',
-                clientError: null
+                clientError: null,
+                showUpdateModal: false
             };
         }
     }
@@ -100,6 +106,52 @@ export default class AddCommand extends React.Component {
         IntegrationStore.removeChangeListener(this.handleIntegrationChange);
     }
 
+    handleUpdateModal() {
+        this.setState({showUpdateModal: true});
+    }
+
+    updateModalDismissed() {
+        this.setState({showUpdateModal: false});
+    }
+
+    handleUpdate() {
+        this.setState({
+            saving: true,
+            serverError: '',
+            clientError: ''
+        });
+
+        let triggerWord = this.state.trigger.trim().toLowerCase();
+        if (triggerWord.indexOf('/') === 0) {
+            triggerWord = triggerWord.substr(1);
+        }
+
+        const command = {
+            display_name: this.state.displayName,
+            description: this.state.description,
+            trigger: triggerWord,
+            url: this.state.url.trim(),
+            method: this.state.method,
+            username: this.state.username,
+            icon_url: this.state.iconUrl,
+            auto_complete: this.state.autocomplete,
+            id: this.state.originalCmd.id
+        };
+
+        AsyncClient.editCommand(
+            command,
+            (data) => {
+                browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
+            },
+            (err) => {
+                this.setState({
+                    saving: false,
+                    serverError: err.message
+                });
+            }
+        );
+    }
+
     handleIntegrationChange() {
         const teamId = TeamStore.getCurrentId();
 
@@ -112,7 +164,7 @@ export default class AddCommand extends React.Component {
             let cmd = this.state.commands.filter((command) => command.id === this.props.location.query.id)[0];
 
             this.setState({
-                cmdId: cmd.id,
+                originalCmd: cmd,
                 displayName: cmd.display_name,
                 description: cmd.description,
                 trigger: cmd.trigger,
@@ -156,8 +208,8 @@ export default class AddCommand extends React.Component {
             auto_complete: this.state.autocomplete
         };
 
-        if (this.state.action === 'edit' && this.state.cmdId) {
-            command.id = this.state.cmdId;
+        if (this.state.action === 'edit' && this.state.originalCmd.id) {
+            command.id = this.state.originalCmd.id;
         }
 
         if (command.auto_complete) {
@@ -239,7 +291,13 @@ export default class AddCommand extends React.Component {
         }
 
         if (this.state.action === 'edit') {
-            AsyncClient.editCommand(
+            if (this.state.originalCmd.url !== command.url || this.state.originalCmd.trigger !== command.trigger || this.state.originalCmd.method !== command.method) {
+                this.handleUpdateModal();
+                this.setState({
+                    saving: false
+                });
+            } else {
+                AsyncClient.editCommand(
                 command,
                 (data) => {
                     browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
@@ -251,6 +309,7 @@ export default class AddCommand extends React.Component {
                     });
                 }
             );
+            }
         } else {
             AsyncClient.addCommand(
                 command,
@@ -698,6 +757,11 @@ export default class AddCommand extends React.Component {
                                     defaultMessage='Save'
                                 />
                             </SpinnerButton>
+                            <UpdateCommandModal
+                                show={this.state.showUpdateModal}
+                                onModalDismissed={this.updateModalDismissed}
+                                onUpdate={this.handleUpdate}
+                            />
                         </div>
                     </form>
                 </div>
