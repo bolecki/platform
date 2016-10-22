@@ -108,10 +108,11 @@ export default class AddCommand extends React.Component {
             loading: !IntegrationStore.hasReceivedCommands(teamId)
         });
 
-        if (!this.state.loading) {
+        if (!this.state.loading && this.state.action === 'edit') {
             let cmd = this.state.commands.filter((command) => command.id === this.props.location.query.id)[0];
 
             this.setState({
+                cmdId: cmd.id,
                 displayName: cmd.display_name,
                 description: cmd.description,
                 trigger: cmd.trigger,
@@ -154,6 +155,10 @@ export default class AddCommand extends React.Component {
             icon_url: this.state.iconUrl,
             auto_complete: this.state.autocomplete
         };
+
+        if (this.state.action === 'edit' && this.state.cmdId) {
+            command.id = this.state.cmdId;
+        }
 
         if (command.auto_complete) {
             command.auto_complete_desc = this.state.autocompleteDescription;
