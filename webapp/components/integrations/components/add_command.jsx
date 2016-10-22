@@ -50,47 +50,31 @@ export default class AddCommand extends React.Component {
 
         const action = this.props.location.query.action
 
+        this.state = {
+            action: action,
+            displayName: '',
+            description: '',
+            trigger: '',
+            url: '',
+            method: REQUEST_POST,
+            username: '',
+            iconUrl: '',
+            autocomplete: false,
+            autocompleteHint: '',
+            autocompleteDescription: '',
+            saving: false,
+            serverError: '',
+            clientError: null,
+            showUpdateModal: false
+        };
+
         if (action === 'edit') {
             const teamId = TeamStore.getCurrentId();
 
-            this.state = {
-                team: teamId,
-                action: action,
+            this.setState({
                 commands: IntegrationStore.getCommands(teamId),
-                loading: !IntegrationStore.hasReceivedCommands(teamId),
-                displayName: '',
-                description: '',
-                trigger: '',
-                url: '',
-                method: REQUEST_POST,
-                username: '',
-                iconUrl: '',
-                autocomplete: false,
-                autocompleteHint: '',
-                autocompleteDescription: '',
-                saving: false,
-                serverError: '',
-                clientError: null,
-                showUpdateModal: false
-            };
-        } else {
-            this.state = {
-                action: action,
-                displayName: '',
-                description: '',
-                trigger: '',
-                url: '',
-                method: REQUEST_POST,
-                username: '',
-                iconUrl: '',
-                autocomplete: false,
-                autocompleteHint: '',
-                autocompleteDescription: '',
-                saving: false,
-                serverError: '',
-                clientError: null,
-                showUpdateModal: false
-            };
+                loading: !IntegrationStore.hasReceivedCommands(teamId)
+            });
         }
     }
 
