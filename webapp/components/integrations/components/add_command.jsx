@@ -32,6 +32,7 @@ export default class AddCommand extends React.Component {
 
         this.handleIntegrationChange = this.handleIntegrationChange.bind(this);
 
+        this.submitCommand = this.submitCommand.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleUpdate = this.handleUpdate.bind(this);
         this.handleUpdateModal = this.handleUpdateModal.bind(this);
@@ -48,10 +49,11 @@ export default class AddCommand extends React.Component {
         this.updateAutocompleteHint = this.updateAutocompleteHint.bind(this);
         this.updateAutocompleteDescription = this.updateAutocompleteDescription.bind(this);
 
-        const action = this.props.location.query.action
+        this.action = this.props.location.query.action;
+        this.originalCommand = null;
+        this.newCommand = null;
 
         this.state = {
-            action: action,
             displayName: '',
             description: '',
             trigger: '',
@@ -68,7 +70,7 @@ export default class AddCommand extends React.Component {
             showUpdateModal: false
         };
 
-        if (action === 'edit') {
+        if (this.action === 'edit') {
             const teamId = TeamStore.getCurrentId();
 
             this.setState({
@@ -98,6 +100,36 @@ export default class AddCommand extends React.Component {
         this.setState({showUpdateModal: false});
     }
 
+    submitCommand() {
+        if (this.action === 'edit') {
+            AsyncClient.editCommand(
+                this.newCmd,
+                (data) => {
+                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
+                },
+                (err) => {
+                    this.setState({
+                        saving: false,
+                        serverError: err.message
+                    });
+                }
+            );
+        } else {
+            AsyncClient.addCommand(
+                this.newCmd,
+                (data) => {
+                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
+                },
+                (err) => {
+                    this.setState({
+                        saving: false,
+                        serverError: err.message
+                    });
+                }
+            );
+        }
+    }
+
     handleUpdate() {
         this.setState({
             saving: true,
@@ -105,35 +137,7 @@ export default class AddCommand extends React.Component {
             clientError: ''
         });
 
-        let triggerWord = this.state.trigger.trim().toLowerCase();
-        if (triggerWord.indexOf('/') === 0) {
-            triggerWord = triggerWord.substr(1);
-        }
-
-        const command = {
-            display_name: this.state.displayName,
-            description: this.state.description,
-            trigger: triggerWord,
-            url: this.state.url.trim(),
-            method: this.state.method,
-            username: this.state.username,
-            icon_url: this.state.iconUrl,
-            auto_complete: this.state.autocomplete,
-            id: this.state.originalCmd.id
-        };
-
-        AsyncClient.editCommand(
-            command,
-            (data) => {
-                browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
-            },
-            (err) => {
-                this.setState({
-                    saving: false,
-                    serverError: err.message
-                });
-            }
-        );
+        this.submitCommand();
     }
 
     handleIntegrationChange() {
@@ -144,21 +148,20 @@ export default class AddCommand extends React.Component {
             loading: !IntegrationStore.hasReceivedCommands(teamId)
         });
 
-        if (!this.state.loading && this.state.action === 'edit') {
-            let cmd = this.state.commands.filter((command) => command.id === this.props.location.query.id)[0];
+        if (!this.state.loading && this.action === 'edit') {
+            this.originalCommand = this.state.commands.filter((command) => command.id === this.props.location.query.id)[0];
 
             this.setState({
-                originalCmd: cmd,
-                displayName: cmd.display_name,
-                description: cmd.description,
-                trigger: cmd.trigger,
-                url: cmd.url,
-                method: cmd.method,
-                username: cmd.username,
-                iconUrl: cmd.icon_url,
-                autocomplete: cmd.auto_complete,
-                autocompleteHint: cmd.auto_complete_hint,
-                autocompleteDescription: cmd.auto_complete_desc
+                displayName: this.originalCommand.display_name,
+                description: this.originalCommand.description,
+                trigger: this.originalCommand.trigger,
+                url: this.originalCommand.url,
+                method: this.originalCommand.method,
+                username: this.originalCommand.username,
+                iconUrl: this.originalCommand.icon_url,
+                autocomplete: this.originalCommand.auto_complete,
+                autocompleteHint: this.originalCommand.auto_complete_hint,
+                autocompleteDescription: this.originalCommand.auto_complete_desc
             });
         }
     }
@@ -192,8 +195,8 @@ export default class AddCommand extends React.Component {
             auto_complete: this.state.autocomplete
         };
 
-        if (this.state.action === 'edit' && this.state.originalCmd.id) {
-            command.id = this.state.originalCmd.id;
+        if (this.action === 'edit' && this.originalCommand.id) {
+            command.id = this.originalCommand.id;
         }
 
         if (command.auto_complete) {
@@ -274,39 +277,19 @@ export default class AddCommand extends React.Component {
             return;
         }
 
-        if (this.state.action === 'edit') {
-            if (this.state.originalCmd.url !== command.url || this.state.originalCmd.trigger !== command.trigger || this.state.originalCmd.method !== command.method) {
+        this.newCmd = command;
+
+        if (this.action === 'edit') {
+            if (this.originalCommand.url !== command.url || this.originalCommand.trigger !== command.trigger || this.originalCommand.method !== command.method) {
                 this.handleUpdateModal();
                 this.setState({
                     saving: false
                 });
             } else {
-                AsyncClient.editCommand(
-                command,
-                (data) => {
-                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
-                },
-                (err) => {
-                    this.setState({
-                        saving: false,
-                        serverError: err.message
-                    });
-                }
-            );
+                this.submitCommand();
             }
         } else {
-            AsyncClient.addCommand(
-                command,
-                (data) => {
-                    browserHistory.push('/' + this.props.team.name + '/integrations/confirm?type=commands&id=' + data.id);
-                },
-                (err) => {
-                    this.setState({
-                        saving: false,
-                        serverError: err.message
-                    });
-                }
-            );
+            this.submitCommand();
         }
     }
 
@@ -372,7 +355,7 @@ export default class AddCommand extends React.Component {
 
     render() {
         let action = null;
-        if (this.state.action === 'edit') {
+        if (this.action === 'edit') {
             action = "Edit";
         } else {
             action = "Add";
