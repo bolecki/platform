@@ -731,6 +731,7 @@ export default class AddCommand extends React.Component {
                                 type='submit'
                                 spinning={this.state.saving}
                                 onClick={this.handleSubmit}
+                                disabled={this.state.loading}
                             >
                                 {submit}
                             </SpinnerButton>
