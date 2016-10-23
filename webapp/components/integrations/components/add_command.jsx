@@ -355,10 +355,23 @@ export default class AddCommand extends React.Component {
 
     render() {
         let action = null;
+        let submit = null;
         if (this.action === 'edit') {
             action = "Edit";
+            submit = (
+                <FormattedMessage
+                    id='edit_command.save'
+                    defaultMessage='Update'
+                />
+            );
         } else {
             action = "Add";
+            submit = (
+                <FormattedMessage
+                    id='add_command.save'
+                    defaultMessage='Save'
+                />
+            );
         }
         let autocompleteFields = null;
         if (this.state.autocomplete) {
@@ -719,10 +732,7 @@ export default class AddCommand extends React.Component {
                                 spinning={this.state.saving}
                                 onClick={this.handleSubmit}
                             >
-                                <FormattedMessage
-                                    id='add_command.save'
-                                    defaultMessage='Save'
-                                />
+                                {submit}
                             </SpinnerButton>
                             <UpdateCommandModal
                                 show={this.state.showUpdateModal}
