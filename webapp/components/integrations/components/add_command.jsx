@@ -359,7 +359,7 @@ export default class AddCommand extends React.Component {
         let action = null;
         let submit = null;
         if (this.action === 'edit') {
-            action = "Edit";
+            action = 'Edit';
             submit = (
                 <FormattedMessage
                     id='edit_command.save'
@@ -367,7 +367,7 @@ export default class AddCommand extends React.Component {
                 />
             );
         } else {
-            action = "Add";
+            action = 'Add';
             submit = (
                 <FormattedMessage
                     id='add_command.save'
