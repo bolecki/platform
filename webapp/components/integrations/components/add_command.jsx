@@ -105,9 +105,7 @@ export default class AddCommand extends React.Component {
         if (this.action === 'edit') {
             AsyncClient.editCommand(
                 this.newCmd,
-                (data) => {
-                    browserHistory.push('/' + this.props.team.name + '/integrations/commands');
-                },
+                browserHistory.push('/' + this.props.team.name + '/integrations/commands'),
                 (err) => {
                     this.setState({
                         saving: false,
