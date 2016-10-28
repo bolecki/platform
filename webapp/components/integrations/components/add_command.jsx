@@ -15,7 +15,7 @@ import FormError from 'components/form_error.jsx';
 import {browserHistory, Link} from 'react-router/es6';
 import SpinnerButton from 'components/spinner_button.jsx';
 import Constants from 'utils/constants.jsx';
-import UpdateCommandModal from '../../update_command_modal.jsx';
+import ConfirmModal from 'components/confirm_modal.jsx';
 
 const REQUEST_POST = 'P';
 const REQUEST_GET = 'G';
@@ -36,8 +36,8 @@ export default class AddCommand extends React.Component {
         this.submitCommand = this.submitCommand.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleUpdate = this.handleUpdate.bind(this);
-        this.handleUpdateModal = this.handleUpdateModal.bind(this);
-        this.updateModalDismissed = this.updateModalDismissed.bind(this);
+        this.handleConfirmModal = this.handleConfirmModal.bind(this);
+        this.confirmModalDismissed = this.confirmModalDismissed.bind(this);
 
         this.updateDisplayName = this.updateDisplayName.bind(this);
         this.updateDescription = this.updateDescription.bind(this);
@@ -68,7 +68,7 @@ export default class AddCommand extends React.Component {
             saving: false,
             serverError: '',
             clientError: null,
-            showUpdateModal: false
+            showConfirmModal: false
         };
 
         if (this.action === 'edit') {
@@ -93,12 +93,12 @@ export default class AddCommand extends React.Component {
         IntegrationStore.removeChangeListener(this.handleIntegrationChange);
     }
 
-    handleUpdateModal() {
-        this.setState({showUpdateModal: true});
+    handleConfirmModal() {
+        this.setState({showConfirmModal: true});
     }
 
-    updateModalDismissed() {
-        this.setState({showUpdateModal: false});
+    confirmModalDismissed() {
+        this.setState({showConfirmModal: false});
     }
 
     submitCommand() {
@@ -373,6 +373,28 @@ export default class AddCommand extends React.Component {
                 />
             );
         }
+
+        const confirmButton = (
+            <FormattedMessage
+                id='update_command.update'
+                defaultMessage='Update'
+            />
+        );
+
+        const confirmTitle = (
+            <FormattedMessage
+                id='update_command.confirm'
+                defaultMessage='Edit Slash Command'
+            />
+        );
+
+        const confirmMessage = (
+            <FormattedMessage
+                id='update_command.question'
+                defaultMessage='Your changes may break the existing slash command. Are you sure you would like to update it?'
+            />
+        );
+
         let autocompleteFields = null;
         if (this.state.autocomplete) {
             autocompleteFields = [(
@@ -735,10 +757,13 @@ export default class AddCommand extends React.Component {
                             >
                                 {submit}
                             </SpinnerButton>
-                            <UpdateCommandModal
-                                show={this.state.showUpdateModal}
-                                onModalDismissed={this.updateModalDismissed}
-                                onUpdate={this.handleUpdate}
+                            <ConfirmModal
+                                title={confirmTitle}
+                                message={confirmMessage}
+                                confirmButton={confirmButton}
+                                show={this.state.showConfirmModal}
+                                onConfirm={this.handleUpdate}
+                                onCancel={this.confirmModalDismissed}
                             />
                         </div>
                     </form>
