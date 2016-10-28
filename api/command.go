@@ -322,13 +322,13 @@ func createCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 
 func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 	if !*utils.Cfg.ServiceSettings.EnableCommands {
-		c.Err = model.NewLocAppError("createCommand", "api.command.disabled.app_error", nil, "")
+		c.Err = model.NewLocAppError("updateCommand", "api.command.disabled.app_error", nil, "")
 		c.Err.StatusCode = http.StatusNotImplemented
 		return
 	}
 
 	if !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_SLASH_COMMANDS) {
-		c.Err = model.NewLocAppError("createCommand", "api.command.admin_only.app_error", nil, "")
+		c.Err = model.NewLocAppError("updateCommand", "api.command.admin_only.app_error", nil, "")
 		c.Err.StatusCode = http.StatusForbidden
 		return
 	}
