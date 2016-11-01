@@ -351,7 +351,7 @@ func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 	} else {
 		oldCmd = result.Data.(*model.Command)
 
-		if (c.Session.UserId != oldCmd.CreatorId && !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_OTHERS_SLASH_COMMANDS)) {
+		if c.Session.UserId != oldCmd.CreatorId && !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_OTHERS_SLASH_COMMANDS) {
 			c.LogAudit("fail - inappropriate permissions")
 			c.Err = model.NewLocAppError("updateCommand", "api.command.update.app_error", nil, "user_id="+c.Session.UserId)
 			return
