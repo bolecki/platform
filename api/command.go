@@ -351,19 +351,24 @@ func updateCommand(c *Context, w http.ResponseWriter, r *http.Request) {
 	} else {
 		oldCmd = result.Data.(*model.Command)
 
-		if c.TeamId != oldCmd.TeamId || (c.Session.UserId != oldCmd.CreatorId && !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_OTHERS_SLASH_COMMANDS)) {
+		if (c.Session.UserId != oldCmd.CreatorId && !HasPermissionToCurrentTeamContext(c, model.PERMISSION_MANAGE_OTHERS_SLASH_COMMANDS)) {
 			c.LogAudit("fail - inappropriate permissions")
 			c.Err = model.NewLocAppError("updateCommand", "api.command.update.app_error", nil, "user_id="+c.Session.UserId)
 			return
-		} else {
-			cmd.Id = oldCmd.Id
-			cmd.Token = oldCmd.Token
-			cmd.CreateAt = oldCmd.CreateAt
-			cmd.UpdateAt = model.GetMillis()
-			cmd.DeleteAt = oldCmd.DeleteAt
-			cmd.CreatorId = oldCmd.CreatorId
-			cmd.TeamId = oldCmd.TeamId
 		}
+
+		if c.TeamId != oldCmd.TeamId {
+			c.Err = model.NewLocAppError("updateCommand", "api.command.team_mismatch.app_error", nil, "user_id="+c.Session.UserId)
+			return
+		}
+
+		cmd.Id = oldCmd.Id
+		cmd.Token = oldCmd.Token
+		cmd.CreateAt = oldCmd.CreateAt
+		cmd.UpdateAt = model.GetMillis()
+		cmd.DeleteAt = oldCmd.DeleteAt
+		cmd.CreatorId = oldCmd.CreatorId
+		cmd.TeamId = oldCmd.TeamId
 	}
 
 	if result := <-Srv.Store.Command().Update(cmd); result.Err != nil {
